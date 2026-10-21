@@ -1,0 +1,222 @@
+"""Modelo de datos (dataclasses). Referencia: blueprint sección 6."""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Optional
+
+
+@dataclass
+class OrigenCompensacion:
+    """Bloque 'Origen del Saldo a favor / Pago de lo indebido' de un concepto."""
+    tipo_origen: str                    # "Saldo a favor" | "Pago de lo indebido"
+    origen_ejercicio: Optional[int] = None
+    origen_concepto: Optional[str] = None
+    saldo_aplicar: Optional[float] = None
+    op_origen: Optional[str] = None
+    monto_original: Optional[float] = None
+    remanente_hist: Optional[float] = None   # remanente histórico antes de aplicar
+    remanente_act: Optional[float] = None    # remanente actualizado (INPC) antes de aplicar
+    fecha_saldo: Optional[str] = None
+
+
+@dataclass
+class Concepto:
+    nombre: str                         # texto tal cual del acuse
+    a_cargo: Optional[float] = None
+    a_favor: Optional[float] = None          # etiqueta "A favor" / "Impuesto a favor"
+    cantidad_favor: Optional[float] = None   # etiqueta "Cantidad a favor" (neto, tras compensaciones)
+    compensaciones: Optional[float] = None   # positivo = monto compensado
+    cantidad_cargo: Optional[float] = None
+    cantidad_pagar: Optional[float] = None
+    origen: Optional[OrigenCompensacion] = None
+
+    @property
+    def saldo_favor(self) -> float:
+        """Saldo a favor efectivo del concepto.
+
+        Regla: usar 'Cantidad a favor' cuando el acuse la trae; si ese campo no
+        tiene valor, caer a 'A favor' / 'Impuesto a favor'. Algunos acuses solo
+        traen uno de los dos renglones.
+        """
+        if self.cantidad_favor is not None:
+            return self.cantidad_favor
+        return self.a_favor or 0.0
+
+
+@dataclass
+class Declaracion:
+    archivo: str
+    rfc: str
+    razon_social: str
+    es_anual: bool
+    ejercicio: Optional[int]
+    periodo: Optional[int]              # 1-12 mensual, 0 = del ejercicio (anual)
+    tipo: str                           # "Normal" | "Complementaria"
+    subtipo: str                        # normal|complementaria|modificacion|no-presentada|dejar-sin-efecto
+    fecha_presentacion: Optional[datetime]
+    operacion: Optional[str]            # clave única
+    version: Optional[str]
+    conceptos: list[Concepto] = field(default_factory=list)
+
+
+@dataclass
+class OrigenSaldo:
+    """Resultado del análisis ISR: un saldo a favor (origen) y sus aplicaciones."""
+    etiqueta: str                       # "Anual 2023", "Pago indebido jun-2023", ...
+    ejercicio: Optional[int]
+    monto_original: float
+    fecha_origen: Optional[str]
+    op_origen: Optional[str]
+    aplicaciones: list = field(default_factory=list)  # list[dict]
+    total_aplicado: float = 0.0
+    remanente_nominal: float = 0.0
+    remanente_actualizado_ultimo: Optional[float] = None  # del último acuse (informativo)
+    estatus: str = ""
+
+
+@dataclass
+class ResultadoIVA:
+    ejercicio: int
+    periodo: int
+    a_favor: float
+    a_cargo: float
+    cantidad_pagar: float
+    tipo: str
+    operacion: str
+
+
+@dataclass
+class ConceptoPago:
+    """Un impuesto dentro del acuse de pago (línea de captura)."""
+    nombre: str
+    a_cargo: float = 0.0            # impuesto a cargo del periodo (contribución)
+    actualizacion: float = 0.0     # parte actualizada (Art. 17-A CFF)
+    recargos: float = 0.0          # recargos por mora (Art. 21 CFF)
+    cantidad_a_cargo: float = 0.0  # a_cargo + actualizacion + recargos
+    cantidad_a_pagar: float = 0.0  # tras acreditamientos/compensaciones
+
+
+@dataclass
+class AcusePago:
+    """Acuse 'INFORMACIÓN REGISTRADA DE PAGOS' con línea de captura y pago recibido.
+
+    Permite verificar si la declaración realmente se pagó y desglosar la parte
+    actualizada y los recargos del importe pagado.
+    """
+    archivo: str
+    rfc: str
+    razon_social: str
+    ejercicio: Optional[int]
+    periodo: Optional[int]                 # 1-12 mensual
+    tipo: str                              # "Normal" | "Complementaria"
+    subtipo: str                           # normal | complementaria | modificacion | ...
+    operacion: Optional[str]
+    fecha_presentacion: Optional[datetime]
+    vencimiento: Optional[str]             # fecha límite de pago
+    # Línea de captura
+    linea_captura: Optional[str] = None
+    importe_a_pagar: float = 0.0           # importe total a pagar (autoritativo)
+    vigente_hasta: Optional[str] = None
+    # Desglose (suma de conceptos)
+    contribucion: float = 0.0
+    actualizacion: float = 0.0
+    recargos: float = 0.0
+    conceptos: list = field(default_factory=list)   # list[ConceptoPago]
+    # Pago recibido en la institución de crédito
+    institucion: Optional[str] = None
+    fecha_pago: Optional[str] = None
+    importe_pagado: Optional[float] = None
+    medio_pago: Optional[str] = None
+    operacion_bancaria: Optional[str] = None
+
+    @property
+    def pagado(self) -> bool:
+        """True si hay comprobante de pago recibido (fecha e importe)."""
+        return bool(self.fecha_pago) and (self.importe_pagado or 0) > 0
+
+
+@dataclass
+class PerdidaFiscal:
+    """Un renglón de la tabla 'Pérdidas fiscales de ejercicios anteriores'."""
+    anio_origen: int
+    pendientes_de_aplicar: Optional[float] = None
+    perdida_actualizada: Optional[float] = None
+    aplicada_en_ejercicio: Optional[float] = None
+    remanente: Optional[float] = None
+
+
+@dataclass
+class DetalleISR:
+    """Determinación de ISR extraída de la DECLARACIÓN DETALLADA (vista previa).
+
+    Cubre mensuales (provisionales) y anuales (del ejercicio) para PM Régimen
+    General, PM RESICO y PF Actividad Empresarial.
+    """
+    archivo: str
+    rfc: str
+    ejercicio: Optional[int]
+    periodo: Optional[int]              # 1-12 mensual, 0 = del ejercicio
+    operacion: Optional[str]
+    fecha_presentacion: Optional[datetime]
+    subtipo: str
+    es_anual: bool
+
+    # Determinación
+    ingresos_acumulables: Optional[float] = None
+    deducciones_autorizadas: Optional[float] = None
+    utilidad_fiscal: Optional[float] = None
+    ptu_pagada: Optional[float] = None
+    perdidas_fiscales_aplicadas: Optional[float] = None
+    resultado_fiscal: Optional[float] = None
+    base_gravable: Optional[float] = None
+    impuesto_causado: Optional[float] = None
+    impuesto_del_periodo: Optional[float] = None
+
+    # Acreditamientos / disminuciones
+    pagos_provisionales_anteriores: Optional[float] = None
+    isr_retenido: Optional[float] = None
+    isr_acreditable_dividendos: Optional[float] = None
+    compensaciones: Optional[float] = None
+
+    # Resultado final
+    impuesto_a_cargo: Optional[float] = None
+    cantidad_a_cargo: Optional[float] = None
+    cantidad_a_pagar: Optional[float] = None
+    isr_a_cargo_ejercicio: Optional[float] = None
+    saldo_a_favor: Optional[float] = None
+    perdida_fiscal_ejercicio: Optional[float] = None
+
+    # Pérdidas: detalle por año de origen
+    perdidas_detalle: list = field(default_factory=list)  # list[PerdidaFiscal]
+
+    # Datos adicionales
+    coeficiente_utilidad: Optional[float] = None
+
+    # Control de lectura
+    regimen: str = ""        # PM_RG, PM_RESICO, PF_AE
+    formato: str = ""        # "dyp" | "nuevo"
+
+
+@dataclass
+class DetalleIVA:
+    """Determinación de IVA extraída de la DECLARACIÓN DETALLADA (vista previa).
+
+    A diferencia del acuse, esta trae el renglón 'Acreditamiento del saldo a favor
+    de periodos anteriores', que permite reconstruir el remanente acumulado real.
+    """
+    archivo: str
+    rfc: str
+    ejercicio: Optional[int]
+    periodo: Optional[int]
+    operacion: Optional[str]
+    fecha_presentacion: Optional[datetime]
+    subtipo: str
+    a_cargo_periodo: Optional[float]        # CANTIDAD A CARGO (IVA a cargo del periodo)
+    a_favor_periodo: Optional[float]        # IMPUESTO A FAVOR (saldo a favor generado)
+    acreditamiento_anterior: float          # ACREDITAMIENTO DEL SALDO A FAVOR DE PERIODOS ANTERIORES
+    impuesto_a_cargo_final: Optional[float] # IMPUESTO A CARGO (tras acreditamiento)
+    cantidad_a_pagar: Optional[float]
+    regimen: str = ""        # régimen de ESTA declaración (encabezado), vía MD
+    lectura: str = "texto"   # "md" = cifras tomadas del MD (identidad cuadra) | "texto"
+    revisar: bool = False    # el MD no cuadra la identidad fiscal → revisar a mano

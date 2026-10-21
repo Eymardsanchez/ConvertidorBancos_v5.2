@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConvertidorBancos 5.2</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- ── Activación (prueba vencida, sin licencia) ─────────────────────────── -->
+<section id="pActivacion" class="acceso oculto">
+  <div class="tarjeta">
+    <div class="cab"><h1>ConvertidorBancos</h1><small>v5.2 · Activación requerida</small></div>
+    <div class="cuerpo">
+      <div id="actTexto" class="estado"></div>
+      <label class="campo">Ingresa tu serial de activación:
+        <input id="actSerial" class="serial" placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX" autocomplete="off"></label>
+      <div id="actMsg" class="msg"></div>
+      <div class="fila"><span class="estado" style="flex:1">¿No tienes serial? Copia tu código de equipo y envíalo a soporte.</span>
+        <button onclick="auth.copiarCodigo('actMsg')">Copiar código de equipo</button></div>
+      <div class="acciones"><button onclick="auth.cerrar()">Cancelar</button>
+        <button id="actBtn" class="primario" onclick="auth.activar('actSerial','actMsg', true)" disabled>Activar</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Login / primer usuario ───────────────────────────────────────────── -->
+<section id="pLogin" class="acceso oculto">
+  <div class="tarjeta">
+    <div class="cab"><h1>ConvertidorBancos</h1><small>v5.2 · Obligaciones + Convertidor + Conciliación</small></div>
+    <form class="cuerpo" onsubmit="auth.entrar(event)">
+      <h2 id="loginTitulo" style="margin:0;font-size:15px">Iniciar sesión</h2>
+      <label class="campo">Usuario <input id="loginUser" autocomplete="username" required></label>
+      <label class="campo">Contraseña <input id="loginPwd" type="password" autocomplete="current-password" required></label>
+      <label id="loginPwd2Box" class="campo oculto">Confirmar contraseña <input id="loginPwd2" type="password"></label>
+      <div id="loginMsg" class="msg"></div>
+      <div class="acciones"><button type="button" onclick="auth.cerrar()">Cancelar</button>
+        <button id="loginBtn" class="primario" type="submit">Entrar</button></div>
+      <button id="loginOlvido" type="button" class="enlace" onclick="auth.abrirRecuperar()">¿Olvidaste tu contraseña?</button>
+    </form>
+  </div>
+</section>
+
+<!-- ── Aplicación ──────────────────────────────────────────────────────── -->
+<div id="pApp" class="app oculto">
+  <header class="barra">
+    <div class="chip">⇄</div>
+    <div><h1>ConvertidorBancos</h1><small>Compliance · Convertidor · Conciliación · v5.2</small></div>
+    <div class="espacio"></div>
+    <button id="pillLic" class="pill" onclick="auth.abrirLicencia()"></button>
+    <button id="pillUser" class="fantasma" onclick="auth.abrirCambiarPwd()"></button>
+  </header>
+  <nav class="menu">
+    <button data-m="conv"   onclick="app.ir('conv')">🏦  Convertidor PDF → Excel</button>
+    <button data-m="concil" onclick="app.ir('concil')">📊  Conciliación CFDI</button>
+    <button data-m="compl"  onclick="app.ir('compl')">⚖  Obligaciones Fiscales</button>
+    <button data-m="saldos" onclick="app.ir('saldos')">💰  Saldos a favor ISR/IVA</button>
+    <button data-m="config" onclick="app.ir('config')">⚙  Configuración</button>
+  </nav>
+  <main class="contenido">
+    <section id="m-conv"   class="modulo oculto"></section>
+    <section id="m-concil" class="modulo oculto"></section>
+    <section id="m-compl"  class="modulo oculto"></section>
+    <section id="m-saldos" class="modulo oculto"></section>
+    <section id="m-config" class="modulo oculto"></section>
+  </main>
+</div>
+
+<div id="velo" class="velo oculto"><div id="ventana" class="ventana"></div></div>
+
+<script src="app.js"></script>
+<script src="mod_comun.js"></script>
+<script src="mod_conv.js"></script>
+<script src="mod_compl.js"></script>
+<script src="mod_concil.js"></script>
+<script src="mod_saldos.js"></script>
+<script src="mod_config.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+/* ConvertidorBancos 5.2 — mismos colores que ui_theme.py de la 5.0 (tema claro). */
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --text:#26251F; --muted:#5A594F; --border:#E1E0D9;
+  --accent:#2F7D57; --accent-soft:#E9F3EE; --accent-ink:#2A5C45; --accent-fg:#FFFFFF;
+  --danger:#A32118; --danger-bg:#FADCDA; --success:#14571B; --success-bg:#DCF0DC;
+  --warn:#8A5A00; --warn-bg:#FFF3D6;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.45 "Segoe UI",system-ui,sans-serif}
+.oculto{display:none !important}
+button{font:inherit;border:1px solid var(--border);background:var(--surface);color:var(--text);
+       border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primario{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+button.fantasma{border-color:transparent;background:transparent;color:var(--muted)}
+button:disabled{opacity:.5;cursor:default}
+input,select{font:inherit;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text)}
+input:focus,select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+label.campo{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.msg{color:var(--danger);font-size:12px;min-height:18px}
+.msg.ok{color:var(--success)}
+
+/* Pantallas de acceso (activación / login) */
+.acceso{min-height:100%;display:grid;place-items:center;padding:24px}
+.tarjeta{width:420px;max-width:100%;background:var(--surface);border:1px solid var(--border);
+         border-radius:12px;overflow:hidden}
+.tarjeta .cab{background:var(--accent-soft);padding:20px;text-align:center;border-top:3px solid var(--accent)}
+.tarjeta .cab h1{margin:0;color:var(--accent);font-size:18px}
+.tarjeta .cab small{color:var(--muted)}
+.tarjeta .cuerpo{padding:22px 28px;display:flex;flex-direction:column;gap:12px}
+.tarjeta .acciones{display:flex;gap:8px;justify-content:flex-end}
+.serial{font:600 15px Consolas,monospace;text-align:center;letter-spacing:.06em}
+.enlace{background:none;border:0;color:var(--accent);padding:0;text-align:left}
+
+/* Aplicación */
+.app{display:grid;grid-template-columns:230px 1fr;grid-template-rows:58px 1fr;height:100%}
+header.barra{grid-column:1/3;background:var(--surface);border-bottom:1px solid var(--border);
+             display:flex;align-items:center;gap:12px;padding:0 16px}
+.chip{width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent);
+      display:grid;place-items:center;font-weight:700;font-size:16px}
+header.barra h1{font-size:14px;margin:0} header.barra small{color:var(--muted)}
+.espacio{flex:1}
+.pill{border:0;background:var(--accent-soft);color:var(--accent-ink);border-radius:999px;padding:5px 12px;font-size:12px}
+nav.menu{background:var(--surface);border-right:1px solid var(--border);padding:10px;display:flex;flex-direction:column;gap:2px}
+nav.menu button{border:0;text-align:left;padding:9px 12px;border-radius:8px;color:var(--muted);background:transparent}
+nav.menu button.activo{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+main.contenido{min-height:0;overflow:auto;padding:14px}
+.modulo{height:100%;min-height:0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;
+      display:flex;flex-direction:column;gap:10px;min-height:0}
+.card h2{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0}
+.fila{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.lista{list-style:none;margin:0;padding:0;overflow:auto;min-height:60px;border:1px solid var(--border);border-radius:8px}
+.lista li{padding:6px 8px;border-bottom:1px solid var(--border);word-break:break-all;font-size:12px}
+.lista li:last-child{border-bottom:0}
+.vacio{color:var(--muted);padding:8px}
+.barra-prog{height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.barra-prog>div{height:100%;width:0;background:var(--accent);transition:width .15s}
+.estado{font-size:12px;color:var(--muted);min-height:18px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border)}
+.tab{border:0;border-bottom:2px solid transparent;border-radius:0;padding:6px 10px;color:var(--muted);background:transparent}
+.tab.activa{border-bottom-color:var(--accent);color:var(--text);font-weight:600}
+.tabla{overflow:auto;flex:1;min-height:0}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:var(--surface);text-align:left;font-weight:600;
+   border-bottom:1px solid var(--border);padding:6px 8px;color:var(--muted);font-size:12px}
+td{padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+td.n,th.n{text-align:right}
+tr.revisar td{background:var(--danger-bg);color:var(--danger)}
+tr.anual td{background:#1A365D;color:#90CDF4}
+.ok{color:var(--success)} .no{color:var(--danger)}
+.pendiente{display:grid;place-items:center;height:100%;color:var(--muted);text-align:center}
+
+/* Ventana emergente */
+.velo{position:fixed;inset:0;background:rgba(20,20,15,.35);display:grid;place-items:center;z-index:50}
+.ventana{background:var(--surface);border-radius:12px;width:440px;max-width:calc(100% - 32px);
+         border-top:3px solid var(--accent);padding:20px 24px;display:flex;flex-direction:column;gap:12px}
+.ventana h3{margin:0;font-size:15px}
+.codigo{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);border-radius:8px;
+        font:700 20px Consolas,monospace;text-align:center;padding:12px}
+
+/* Columna con scroll: los bloques conservan su alto natural (no se comprimen ni se enciman
+   al achicar la ventana); si no caben, el contenedor hace scroll. */
+.apilado>*{flex-shrink:0}
