@@ -82,27 +82,55 @@ const saldos = {
   },
   resultado(d){
     $("sRfc").value = d.rfc;
-    let txt = `${d.rfc} — ${d.razon}\n${d.regimen}\nPeriodos vigentes: ${d.vigentes} · ` +
-      `Remanente ISR: ${dinero(d.remanente_isr)}\nIVA — Generado: ${dinero(d.iva.generado)} · ` +
-      `Acreditado: ${dinero(d.iva.acreditado)} · Neto: ${dinero(d.iva.neto)} → Remanente al cierre: ${dinero(d.iva.cierre)}`;
-    const nrev = d.filas.filter(f => f.revisar).length;
-    if (nrev) txt += `\n⚠ ${nrev} declaración(es) por revisar: la identidad fiscal no cuadró al leerlas (renglón en rojo).`;
+    const nrev = (d.filas || []).filter(f => f.revisar).length;
+
+    const ivaResumen = [
+      "IVA",
+      `- Generado: ${dinero(d.iva.generado)}`,
+      `- Acreditado: ${dinero(d.iva.acreditado)}`,
+      `- Neto: ${dinero(d.iva.neto)}`,
+      `- Remanente al cierre: ${dinero(d.iva.cierre)}`,
+    ].join("\n");
+
+    const isrResumen = [
+      "ISR",
+      `- Remanente total: ${dinero(d.remanente_isr)}`,
+      `- Pagos provisionales acumulados: ${dinero(d.isr?.total_pagos_prov ?? 0)}`,
+      `- Declaraciones ISR: ${(d.filas_isr || []).length}`,
+    ].join("\n");
+
+    let txt = [
+      `${d.rfc} — ${d.razon}`,
+      `${d.regimen}`,
+      `Periodos vigentes: ${d.vigentes}`,
+      "",
+      ivaResumen,
+      "",
+      isrResumen,
+    ].join("\n");
+
+    if (nrev) txt += `\n\n⚠ ${nrev} declaración(es) por revisar: la identidad fiscal no cuadró al leerlas (renglón en rojo).`;
     $("sResumen").textContent = txt;
-    $("sNota").textContent = d.iva.nota || "";
-    saldos._md = d.filas.map(f => f.md);
-    $("sTablaIva").tBodies[0].innerHTML = d.filas.map((f, i) => `
+
+    const notas = [];
+    if (d.iva && d.iva.nota) notas.push(`IVA: ${d.iva.nota}`);
+    if (d.isr && d.isr.nota) notas.push(`ISR: ${d.isr.nota}`);
+    $("sNota").textContent = notas.join("\n\n");
+
+    saldos._md = (d.filas || []).map(f => f.md);
+    $("sTablaIva").tBodies[0].innerHTML = (d.filas || []).map((f, i) => `
       <tr class="${f.revisar ? "revisar" : ""}"><td>${esc(f.periodo)}</td><td>${esc(f.operacion)}</td>
       <td>${esc(f.fecha)}</td><td class="n">${dinero(f.cargo)}</td><td class="n">${dinero(f.generado)}</td>
       <td class="n">${dinero(f.acreditado)}</td><td class="n">${dinero(f.remanente)}</td>
       <td>${f.revisar ? "⚠ revisar" : esc(f.regimen || "—")}</td>
       <td>${f.md ? `<button class="fantasma" title="Abrir el MD de esta declaración" onclick="pywebview.api.saldos_ver_md(saldos._md[${i}])">Ver MD</button>` : ""}</td></tr>`).join("");
-    $("sTablaPag").tBodies[0].innerHTML = d.pagos.map(p => `
+    $("sTablaPag").tBodies[0].innerHTML = (d.pagos || []).map(p => `
       <tr><td>${esc(p.periodo)}</td><td>${esc(p.tipo)}</td><td>${esc(p.operacion)}</td><td>${esc(p.venc)}</td>
       <td class="n">${dinero(p.contrib)}</td><td class="n">${dinero(p.actualiz)}</td><td class="n">${dinero(p.recargos)}</td>
       <td class="n">${dinero(p.importe)}</td><td class="n">${dinero(p.pagado)}</td><td>${esc(p.fecha_pago)}</td>
       <td class="${p.ok ? "ok" : "no"}">${p.ok ? "✓ Pagado" : "⚠ Sin comprobante"}</td></tr>`).join("");
     document.querySelector('#m-saldos [data-t="pag"]').textContent =
-      d.pagos.length ? `Pagos (${d.pagos.filter(p => p.ok).length}/${d.pagos.length})` : "Pagos";
+      (d.pagos || []).length ? `Pagos (${(d.pagos || []).filter(p => p.ok).length}/${(d.pagos || []).length})` : "Pagos";
     $("sTablaIsr").tBodies[0].innerHTML = (d.filas_isr || []).map(f => `
       <tr class="${f.es_anual ? "anual" : ""}"><td>${esc(f.periodo)}</td><td>${esc(f.operacion)}</td>
       <td>${esc(f.fecha)}</td><td class="n">${dinero(f.ingresos)}</td><td class="n">${dinero(f.utilidad)}</td>
@@ -113,12 +141,6 @@ const saldos = {
     const nIsr = (d.filas_isr || []).length;
     document.querySelector('#m-saldos [data-t="isr"]').textContent =
       nIsr ? `ISR acumulado (${nIsr})` : "ISR acumulado";
-    if (d.isr && d.isr.nota) {
-      let t = $("sResumen").textContent;
-      t += `\nISR — ${nIsr} declaración(es) · Pagos prov. acumulados: ${dinero(d.isr.total_pagos_prov)}`;
-      if (d.isr.nota) t += `\nISR nota: ${d.isr.nota}`;
-      $("sResumen").textContent = t;
-    }
     $("sBtnExcel").disabled = false; window.__listo = true;
   },
   async excel(){
